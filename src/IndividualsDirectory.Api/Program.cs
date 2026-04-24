@@ -1,4 +1,5 @@
 using FluentValidation;
+using IndividualsDirectory.Api.Middleware;
 using IndividualsDirectory.Data;
 using IndividualsDirectory.Service;
 
@@ -13,6 +14,8 @@ builder.Services
     .AddServiceLayer();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
