@@ -1,3 +1,4 @@
+using FluentValidation;
 using IndividualsDirectory.Data;
 using IndividualsDirectory.Service;
 
@@ -5,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
 builder.Services
     .AddDataLayer()

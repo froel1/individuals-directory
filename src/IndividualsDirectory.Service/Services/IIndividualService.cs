@@ -4,9 +4,12 @@ namespace IndividualsDirectory.Service.Services;
 
 public interface IIndividualService
 {
-    Task<IReadOnlyList<IndividualDto>> GetAllAsync(CancellationToken ct = default);
-    Task<IndividualDto?> GetByIdAsync(int id, CancellationToken ct = default);
-    Task<IndividualDto> CreateAsync(CreateIndividualRequest request, CancellationToken ct = default);
+    Task<int> CreateAsync(CreateIndividualRequest request, CancellationToken ct = default);
     Task<bool> UpdateAsync(int id, UpdateIndividualRequest request, CancellationToken ct = default);
     Task<bool> DeleteAsync(int id, CancellationToken ct = default);
+    Task<IndividualDetailsDto?> GetByIdAsync(int id, CancellationToken ct = default);
+    Task<PagedResult<IndividualListItemDto>> QuickSearchAsync(QuickSearchRequest request, CancellationToken ct = default);
+    Task<PagedResult<IndividualListItemDto>> DetailedSearchAsync(DetailedSearchRequest request, CancellationToken ct = default);
+    Task<bool> UpdateConnectionsAsync(int ownerId, IReadOnlyList<ConnectedIndividual> connections, CancellationToken ct = default);
+    Task<IReadOnlyList<ConnectionGroupDto>?> GetConnectionsGroupedAsync(int ownerId, CancellationToken ct = default);
 }
