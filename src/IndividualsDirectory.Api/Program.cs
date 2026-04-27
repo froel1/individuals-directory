@@ -14,7 +14,8 @@ builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 builder.Services.Configure<ImageStorageOptions>(builder.Configuration.GetSection("ImageStorage"));
 
 builder.Services
-    .AddDataLayer()
+    .AddDataLayer(builder.Configuration.GetConnectionString("Default")
+        ?? throw new InvalidOperationException("Connection string 'Default' not configured."))
     .AddServiceLayer();
 
 var app = builder.Build();

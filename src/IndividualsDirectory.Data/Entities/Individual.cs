@@ -9,5 +9,9 @@ public class Individual
     public string PersonalNumber { get; set; } = string.Empty;
     public DateOnly DateOfBirth { get; set; }
     public int CityId { get; set; }
-    public string? ImagePath { get; set; }
+    public Guid? ImageId { get; set; }
+
+    public City City { get; set; } = null!;
+    public ICollection<Contact> Contacts { get; set; } = [];
+    public ICollection<IndividualConnection> Connections { get; set; } = [];
 }
