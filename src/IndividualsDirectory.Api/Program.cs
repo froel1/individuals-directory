@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddLocalization();
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
 builder.Services
@@ -16,6 +17,7 @@ builder.Services
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<LocalizationMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

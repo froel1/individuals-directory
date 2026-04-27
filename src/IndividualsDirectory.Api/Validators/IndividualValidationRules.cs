@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 
 namespace IndividualsDirectory.Api.Validators;
 
@@ -8,20 +9,17 @@ internal static class IndividualValidationRules
     private static readonly Regex GeorgianOnly = new("^[\u10D0-\u10F0]+$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
     private static readonly Regex LatinOnly = new("^[A-Za-z]+$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
-    public static IRuleBuilderOptions<T, string> Name<T>(this IRuleBuilder<T, string> rule) =>
-        rule.NotEmpty()
-            .Length(2, 50)
-            .Must(BeSingleAlphabet)
-            .WithMessage("Must contain only Georgian or Latin letters, not a mix of both.");
+    public static IRuleBuilderOptions<T, string> Name<T>(this IRuleBuilder<T, string> rule, IStringLocalizer localizer) =>
+        rule.NotEmpty().WithMessage(_ => localizer["Validation_Required"].Value)
+            .Length(2, 50).WithMessage(_ => localizer["Validation_Name_Length"].Value)
+            .Must(BeSingleAlphabet).WithMessage(_ => localizer["Validation_Name_AlphabetMix"].Value);
 
-    public static IRuleBuilderOptions<T, string> PersonalNumber<T>(this IRuleBuilder<T, string> rule) =>
-        rule.NotEmpty()
-            .Matches(@"^\d{11}$")
-            .WithMessage("Personal number must be exactly 11 digits.");
+    public static IRuleBuilderOptions<T, string> PersonalNumber<T>(this IRuleBuilder<T, string> rule, IStringLocalizer localizer) =>
+        rule.NotEmpty().WithMessage(_ => localizer["Validation_Required"].Value)
+            .Matches(@"^\d{11}$").WithMessage(_ => localizer["Validation_PersonalNumber_Format"].Value);
 
-    public static IRuleBuilderOptions<T, DateOnly> AdultDateOfBirth<T>(this IRuleBuilder<T, DateOnly> rule) =>
-        rule.Must(BeAtLeast18)
-            .WithMessage("Individual must be at least 18 years old.");
+    public static IRuleBuilderOptions<T, DateOnly> AdultDateOfBirth<T>(this IRuleBuilder<T, DateOnly> rule, IStringLocalizer localizer) =>
+        rule.Must(BeAtLeast18).WithMessage(_ => localizer["Validation_DateOfBirth_Adult"].Value);
 
     private static bool BeSingleAlphabet(string value) =>
         !string.IsNullOrEmpty(value) && (GeorgianOnly.IsMatch(value) || LatinOnly.IsMatch(value));
