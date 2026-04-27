@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using IndividualsDirectory.Data.Entities;
+using Contact = IndividualsDirectory.Service.Models.Shared.Contact;
 
 namespace IndividualsDirectory.Service.Models;
 

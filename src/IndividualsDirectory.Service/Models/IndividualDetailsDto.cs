@@ -1,4 +1,5 @@
 using IndividualsDirectory.Data.Entities;
+using Contact = IndividualsDirectory.Service.Models.Shared.Contact;
 
 namespace IndividualsDirectory.Service.Models;
 

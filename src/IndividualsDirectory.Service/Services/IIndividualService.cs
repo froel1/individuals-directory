@@ -1,4 +1,5 @@
 using IndividualsDirectory.Service.Models;
+using IndividualsDirectory.Service.Models.Shared;
 
 namespace IndividualsDirectory.Service.Services;
 

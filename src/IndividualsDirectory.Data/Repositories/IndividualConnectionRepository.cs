@@ -12,6 +12,11 @@ public class IndividualConnectionRepository(AppDbContext context) : IIndividualC
             .Where(x => x.IndividualId == ownerId)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<IndividualConnection>> GetAllInvolvingAsync(int individualId, CancellationToken ct = default) =>
+        await context.IndividualConnections
+            .Where(x => x.IndividualId == individualId || x.ConnectedIndividualId == individualId)
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<IndividualConnection>> GetReferencesToAsync(int individualId, CancellationToken ct = default) =>
         await context.IndividualConnections
             .Where(x => x.ConnectedIndividualId == individualId)

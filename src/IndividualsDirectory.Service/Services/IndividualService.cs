@@ -3,6 +3,8 @@ using IndividualsDirectory.Data.Repositories;
 using IndividualsDirectory.Data.UnitOfWork;
 using IndividualsDirectory.Service.Images;
 using IndividualsDirectory.Service.Models;
+using IndividualsDirectory.Service.Models.Shared;
+using Contact = IndividualsDirectory.Service.Models.Shared.Contact;
 using ContactEntity = IndividualsDirectory.Data.Entities.Contact;
 
 namespace IndividualsDirectory.Service.Services;
@@ -107,7 +109,7 @@ public class IndividualService(
             entity.DateOfBirth,
             entity.CityId,
             entity.ImageId,
-            entity.Contacts.Select(c => new Models.Contact(c.Number, c.Type)).ToList(),
+            entity.Contacts.Select(c => new Contact(c.Number, c.Type)).ToList(),
             entity.Connections.Select(c => new ConnectedIndividualDetailsDto(
                 c.ConnectedIndividualId,
                 c.ConnectedIndividual.FirstName,
@@ -159,12 +161,17 @@ public class IndividualService(
             return false;
         }
 
-        var existing = await connections.GetByOwnerAsync(ownerId, ct);
-        var existingByConnectedId = existing.ToDictionary(x => x.ConnectedIndividualId);
-        var desiredByConnectedId = desired.ToDictionary(x => x.IndividualId);
+        var allInvolving = await connections.GetAllInvolvingAsync(ownerId, ct);
 
-        var toRemove = existing
-            .Where(x => !desiredByConnectedId.ContainsKey(x.ConnectedIndividualId))
+        var existingPairs = allInvolving
+            .GroupBy(c => c.IndividualId == ownerId ? c.ConnectedIndividualId : c.IndividualId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var desiredByOtherId = desired.ToDictionary(x => x.IndividualId);
+
+        var toRemove = existingPairs
+            .Where(kvp => !desiredByOtherId.ContainsKey(kvp.Key))
+            .SelectMany(kvp => kvp.Value)
             .ToList();
         if (toRemove.Count > 0)
         {
@@ -173,9 +180,34 @@ public class IndividualService(
 
         foreach (var d in desired)
         {
-            if (existingByConnectedId.TryGetValue(d.IndividualId, out var existingConn))
+            if (existingPairs.TryGetValue(d.IndividualId, out var existingRows))
             {
-                existingConn.ConnectionType = d.ConnectionType;
+                foreach (var row in existingRows)
+                {
+                    row.ConnectionType = d.ConnectionType;
+                }
+
+                var hasForward = existingRows.Any(r => r.IndividualId == ownerId);
+                var hasReverse = existingRows.Any(r => r.ConnectedIndividualId == ownerId);
+
+                if (!hasForward)
+                {
+                    connections.Add(new IndividualConnection
+                    {
+                        IndividualId = ownerId,
+                        ConnectedIndividualId = d.IndividualId,
+                        ConnectionType = d.ConnectionType,
+                    });
+                }
+                if (!hasReverse)
+                {
+                    connections.Add(new IndividualConnection
+                    {
+                        IndividualId = d.IndividualId,
+                        ConnectedIndividualId = ownerId,
+                        ConnectionType = d.ConnectionType,
+                    });
+                }
             }
             else
             {
@@ -183,6 +215,12 @@ public class IndividualService(
                 {
                     IndividualId = ownerId,
                     ConnectedIndividualId = d.IndividualId,
+                    ConnectionType = d.ConnectionType,
+                });
+                connections.Add(new IndividualConnection
+                {
+                    IndividualId = d.IndividualId,
+                    ConnectedIndividualId = ownerId,
                     ConnectionType = d.ConnectionType,
                 });
             }
