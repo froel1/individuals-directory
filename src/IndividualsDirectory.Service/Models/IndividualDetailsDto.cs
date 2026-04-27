@@ -7,6 +7,7 @@ public record IndividualDetailsDto(
     int Id,
     string FirstName,
     string LastName,
+    string? ImageUrl,
     Gender Gender,
     string PersonalNumber,
     DateOnly DateOfBirth,

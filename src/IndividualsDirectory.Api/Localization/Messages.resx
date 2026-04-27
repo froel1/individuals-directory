@@ -45,4 +45,13 @@
   <data name="Validation_Failed" xml:space="preserve">
     <value>One or more validation errors occurred.</value>
   </data>
+  <data name="Validation_Image_Required" xml:space="preserve">
+    <value>An image file is required.</value>
+  </data>
+  <data name="Validation_Image_TooLarge" xml:space="preserve">
+    <value>Image exceeds the maximum size of {0} bytes.</value>
+  </data>
+  <data name="Validation_Image_InvalidType" xml:space="preserve">
+    <value>Image content type is not allowed. Allowed: {0}.</value>
+  </data>
 </root>

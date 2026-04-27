@@ -45,4 +45,13 @@
   <data name="Validation_Failed" xml:space="preserve">
     <value>დაფიქსირდა ვალიდაციის ერთი ან მეტი შეცდომა.</value>
   </data>
+  <data name="Validation_Image_Required" xml:space="preserve">
+    <value>სურათი სავალდებულოა.</value>
+  </data>
+  <data name="Validation_Image_TooLarge" xml:space="preserve">
+    <value>სურათის ზომა აჭარბებს მაქსიმალურ ზომას {0} ბაიტი.</value>
+  </data>
+  <data name="Validation_Image_InvalidType" xml:space="preserve">
+    <value>სურათის ფორმატი დაუშვებელია. დაშვებული ტიპებია: {0}.</value>
+  </data>
 </root>

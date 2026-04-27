@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
 
 namespace IndividualsDirectory.Service.Images;
 
 public class FileSystemImageStorageService : IImageStorageService
 {
+    private static readonly FileExtensionContentTypeProvider ContentTypeProvider = new();
+
     private readonly string _basePath;
 
     public FileSystemImageStorageService(IOptions<ImageStorageOptions> options)
@@ -23,6 +26,28 @@ public class FileSystemImageStorageService : IImageStorageService
         await content.CopyToAsync(fs, ct);
 
         return imageId;
+    }
+
+    public Task<ImageFile?> GetAsync(Guid imageId, CancellationToken ct = default)
+    {
+        if (!Directory.Exists(_basePath))
+        {
+            return Task.FromResult<ImageFile?>(null);
+        }
+
+        var match = Directory.EnumerateFiles(_basePath, $"{imageId}.*").FirstOrDefault();
+        if (match is null)
+        {
+            return Task.FromResult<ImageFile?>(null);
+        }
+
+        if (!ContentTypeProvider.TryGetContentType(match, out var contentType))
+        {
+            contentType = "application/octet-stream";
+        }
+
+        Stream stream = File.OpenRead(match);
+        return Task.FromResult<ImageFile?>(new ImageFile(stream, contentType));
     }
 
     public Task DeleteAsync(Guid imageId, CancellationToken ct = default)

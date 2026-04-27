@@ -103,6 +103,7 @@ public class IndividualService(
             entity.Id,
             entity.FirstName,
             entity.LastName,
+            ImageUrl: null,
             entity.Gender,
             entity.PersonalNumber,
             entity.DateOfBirth,
