@@ -1,4 +1,5 @@
 using IndividualsDirectory.Data.Entities;
+using IndividualsDirectory.Data.Models;
 
 namespace IndividualsDirectory.Data.Repositories;
 
@@ -7,7 +8,9 @@ public interface IIndividualRepository
     Task<Individual?> GetByIdAsync(int id, CancellationToken ct = default);
     Task<Individual?> GetByIdWithDetailsAsync(int id, CancellationToken ct = default);
     Task<bool> ExistsAsync(int id, CancellationToken ct = default);
+    Task<IReadOnlyList<int>> GetExistingIdsAsync(IEnumerable<int> ids, CancellationToken ct = default);
     Task<bool> PersonalNumberExistsAsync(string personalNumber, int? excludeId = null, CancellationToken ct = default);
+    Task<IReadOnlyList<ConnectionCountRow>> GetConnectionCountsAsync(CancellationToken ct = default);
 
     void Add(Individual individual);
     void Remove(Individual individual);

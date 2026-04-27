@@ -13,5 +13,6 @@ public interface IIndividualService
     Task<PagedResult<IndividualListItemDto>> DetailedSearchAsync(DetailedSearchRequest request, CancellationToken ct = default);
     Task<bool> UpdateConnectionsAsync(int ownerId, IReadOnlyList<ConnectedIndividual> connections, CancellationToken ct = default);
     Task<IReadOnlyList<ConnectionGroupDto>?> GetConnectionsGroupedAsync(int ownerId, CancellationToken ct = default);
+    Task<IReadOnlyList<IndividualConnectionCountsDto>> GetAllConnectionCountsAsync(CancellationToken ct = default);
     Task<Guid?> UploadImageAsync(int individualId, Stream content, string fileName, CancellationToken ct = default);
 }

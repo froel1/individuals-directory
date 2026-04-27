@@ -54,4 +54,16 @@
   <data name="Validation_Image_InvalidType" xml:space="preserve">
     <value>Image content type is not allowed. Allowed: {0}.</value>
   </data>
+  <data name="Validation_City_NotFound" xml:space="preserve">
+    <value>City with id {0} does not exist.</value>
+  </data>
+  <data name="Validation_PersonalNumber_Duplicate" xml:space="preserve">
+    <value>Personal number {0} is already in use.</value>
+  </data>
+  <data name="Validation_ConnectedIndividual_NotFound" xml:space="preserve">
+    <value>Connected individual(s) with id(s) {0} do not exist.</value>
+  </data>
+  <data name="Validation_SelfConnection" xml:space="preserve">
+    <value>An individual cannot be connected to themselves.</value>
+  </data>
 </root>

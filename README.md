@@ -1,83 +1,50 @@
 # Individuals Directory
 
-A .NET 10 Web API for managing individuals (natural persons). Built as a layered application with clean separation between API, business logic, and data access.
+Web API for the individuals directory task. .NET 10, EF Core, SQL Server.
 
-## Tech stack
+## Setup
 
-- **.NET 10** (ASP.NET Core Web API)
-- **C#** with controllers-based routing
-- **OpenAPI** (built-in Microsoft.AspNetCore.OpenApi)
-- In-memory repository (swappable for EF Core / SQL later)
+1. Update `ConnectionStrings:Default` in `src/IndividualsDirectory.Api/appsettings.json`.
+2. Create the schema (pick one):
+   - `dotnet ef database update -p src/IndividualsDirectory.Data -s src/IndividualsDirectory.Api`
+   - or run `scripts/CreateDatabase.sql` against your DB
+3. (Optional) Run `scripts/SeedDemoData.sql` for sample individuals/contacts/connections.
+4. `dotnet run --project src/IndividualsDirectory.Api`
 
-## Solution structure
+Swagger at `/swagger`.
 
-```
-individuals-directory/
-├── IndividualsDirectory.slnx
-└── src/
-    ├── IndividualsDirectory.Api/         # HTTP layer — controllers, DI composition, startup
-    ├── IndividualsDirectory.Service/     # Business logic — services, DTOs, request models
-    └── IndividualsDirectory.Data/        # Data access — entities, repositories
-```
+## Endpoints
 
-**Dependencies:** `Api` → `Service` → `Data`. The Data layer has no upward references.
+All under `/api/individuals`:
 
-## Getting started
-
-### Prerequisites
-
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-
-### Run
-
-```bash
-dotnet run --project src/IndividualsDirectory.Api
-```
-
-The API will listen on the ports configured in `src/IndividualsDirectory.Api/Properties/launchSettings.json` (typically `https://localhost:7xxx` and `http://localhost:5xxx`).
-
-OpenAPI document is exposed at `/openapi/v1.json` in Development.
-
-### Build
-
-```bash
-dotnet build
-```
-
-### Test
-
-```bash
-dotnet test
-```
-
-## API endpoints
-
-Base route: `/api/individuals`
-
-| Method | Route                     | Description             |
-|--------|---------------------------|-------------------------|
-| GET    | `/api/individuals`        | List all individuals    |
-| GET    | `/api/individuals/{id}`   | Get individual by id    |
-| POST   | `/api/individuals`        | Create individual       |
-| PUT    | `/api/individuals/{id}`   | Update individual       |
-| DELETE | `/api/individuals/{id}`   | Delete individual       |
-
-### Example request
-
-```bash
-curl -X POST http://localhost:5000/api/individuals \
-  -H "Content-Type: application/json" \
-  -d '{
-    "firstName": "John",
-    "lastName": "Doe",
-    "personalNumber": "01001012345",
-    "dateOfBirth": "1990-01-01",
-    "phoneNumber": "+995555123456",
-    "email": "john.doe@example.com"
-  }'
-```
+- `POST /` — create
+- `PUT /{id}` — edit basic info (PATCH-style, only sent fields change)
+- `DELETE /{id}` — delete
+- `GET /{id}` — full details
+- `GET /quick-search` — LIKE on firstName / lastName / personalNumber, OR
+- `GET /detailed-search` — exact match on every field, AND
+- `POST /{id}/image` — multipart upload (field name `File`)
+- `GET /{id}/image` — stream the image
+- `PUT /{id}/connections` — set the list (server diffs add/remove)
+- `GET /{id}/connections/grouped` — this person's connections grouped by type
+- `GET /connection-counts` — system-wide connection-counts report
 
 ## Notes
 
-- Authorization is **not** configured; all endpoints are public.
-- Storage is in-memory; data is lost on restart. Swap `InMemoryIndividualRepository` with an EF Core / Dapper implementation to persist.
+- Connections are bidirectional. Adding (A → B) creates two rows; deleting from either side removes both.
+- Validation is FluentValidation, fired by a global action filter. Domain checks (city exists, personal number unique, no self-connection) live in the service and surface as 400 via the exception middleware.
+- Localization: send `Accept-Language: ka` for Georgian. Default is English.
+- Images saved to `uploads/individuals/{guid}.{ext}` on disk. DB only stores the GUID. URL is built in the controller.
+- Cities ship as reference data via `HasData`. Demo individuals are in `SeedDemoData.sql` instead — kept out of migrations.
+
+## Layout
+
+```
+src/
+  IndividualsDirectory.Api/       controllers, validators, middleware, filters
+  IndividualsDirectory.Service/   business logic, DTOs, image storage
+  IndividualsDirectory.Data/      EF context, entities, repos, UoW, migrations
+scripts/
+  CreateDatabase.sql              schema + cities (auto-generated from migrations)
+  SeedDemoData.sql                optional demo data
+```

@@ -132,4 +132,11 @@ public class IndividualsController(
         var result = await service.GetConnectionsGroupedAsync(id, ct);
         return result is null ? NotFound() : Ok(result);
     }
+
+    /// <summary>
+    /// System-wide report: for each individual that has at least one connection, returns counts of their connections grouped by connection type.
+    /// </summary>
+    [HttpGet("connection-counts")]
+    public async Task<IActionResult> GetAllConnectionCounts(CancellationToken ct) =>
+        Ok(await service.GetAllConnectionCountsAsync(ct));
 }

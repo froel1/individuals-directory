@@ -1,5 +1,6 @@
 using IndividualsDirectory.Data.Context;
 using IndividualsDirectory.Data.Entities;
+using IndividualsDirectory.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace IndividualsDirectory.Data.Repositories;
@@ -19,10 +20,30 @@ public class IndividualRepository(AppDbContext context) : IIndividualRepository
     public Task<bool> ExistsAsync(int id, CancellationToken ct = default) =>
         context.Individuals.AnyAsync(x => x.Id == id, ct);
 
+    public async Task<IReadOnlyList<int>> GetExistingIdsAsync(IEnumerable<int> ids, CancellationToken ct = default)
+    {
+        var requested = ids.Distinct().ToList();
+        return await context.Individuals
+            .Where(x => requested.Contains(x.Id))
+            .Select(x => x.Id)
+            .ToListAsync(ct);
+    }
+
     public Task<bool> PersonalNumberExistsAsync(string personalNumber, int? excludeId = null, CancellationToken ct = default) =>
         context.Individuals.AnyAsync(
             x => x.PersonalNumber == personalNumber && (excludeId == null || x.Id != excludeId.Value),
             ct);
+
+    public async Task<IReadOnlyList<ConnectionCountRow>> GetConnectionCountsAsync(CancellationToken ct = default) =>
+        await context.IndividualConnections
+            .GroupBy(c => new { c.IndividualId, c.Individual.FirstName, c.Individual.LastName, c.ConnectionType })
+            .Select(g => new ConnectionCountRow(
+                g.Key.IndividualId,
+                g.Key.FirstName,
+                g.Key.LastName,
+                g.Key.ConnectionType,
+                g.Count()))
+            .ToListAsync(ct);
 
     public void Add(Individual individual) => context.Individuals.Add(individual);
 

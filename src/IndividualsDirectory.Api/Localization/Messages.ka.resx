@@ -54,4 +54,16 @@
   <data name="Validation_Image_InvalidType" xml:space="preserve">
     <value>სურათის ფორმატი დაუშვებელია. დაშვებული ტიპებია: {0}.</value>
   </data>
+  <data name="Validation_City_NotFound" xml:space="preserve">
+    <value>ქალაქი იდენტიფიკატორით {0} არ არსებობს.</value>
+  </data>
+  <data name="Validation_PersonalNumber_Duplicate" xml:space="preserve">
+    <value>პირადი ნომერი {0} უკვე გამოყენებულია.</value>
+  </data>
+  <data name="Validation_ConnectedIndividual_NotFound" xml:space="preserve">
+    <value>დაკავშირებული პირები იდენტიფიკატორებით {0} არ არსებობენ.</value>
+  </data>
+  <data name="Validation_SelfConnection" xml:space="preserve">
+    <value>პირი არ შეიძლება იყოს დაკავშირებული საკუთარ თავზე.</value>
+  </data>
 </root>

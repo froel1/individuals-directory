@@ -1,6 +1,7 @@
 using IndividualsDirectory.Data.Entities;
 using IndividualsDirectory.Data.Repositories;
 using IndividualsDirectory.Data.UnitOfWork;
+using IndividualsDirectory.Service.Exceptions;
 using IndividualsDirectory.Service.Images;
 using IndividualsDirectory.Service.Models;
 using IndividualsDirectory.Service.Models.Shared;
@@ -11,12 +12,21 @@ namespace IndividualsDirectory.Service.Services;
 
 public class IndividualService(
     IIndividualRepository individuals,
+    ICityRepository cities,
     IIndividualConnectionRepository connections,
     IImageStorageService imageStorage,
     IUnitOfWork uow) : IIndividualService
 {
     public async Task<int> CreateAsync(CreateIndividualRequest request, CancellationToken ct = default)
     {
+        await EnsureCityExistsAsync(request.CityId, ct);
+        await EnsurePersonalNumberAvailableAsync(request.PersonalNumber, excludeId: null, ct);
+
+        if (request.ConnectedIndividuals is { Count: > 0 } incoming)
+        {
+            await EnsureConnectionsValidAsync(ownerId: null, incoming.Select(c => c.IndividualId), ct);
+        }
+
         var individual = new Individual
         {
             FirstName = request.FirstName,
@@ -50,6 +60,9 @@ public class IndividualService(
     {
         var individual = await individuals.GetByIdWithDetailsAsync(id, ct);
         if (individual is null) return false;
+
+        if (request.CityId.HasValue) await EnsureCityExistsAsync(request.CityId.Value, ct);
+        if (request.PersonalNumber != null) await EnsurePersonalNumberAvailableAsync(request.PersonalNumber, excludeId: id, ct);
 
         if (request.FirstName != null) individual.FirstName = request.FirstName;
         if (request.LastName != null) individual.LastName = request.LastName;
@@ -161,6 +174,8 @@ public class IndividualService(
             return false;
         }
 
+        await EnsureConnectionsValidAsync(ownerId, desired.Select(d => d.IndividualId), ct);
+
         var allInvolving = await connections.GetAllInvolvingAsync(ownerId, ct);
 
         var existingPairs = allInvolving
@@ -268,6 +283,55 @@ public class IndividualService(
         }
 
         return newImageId;
+    }
+
+    public async Task<IReadOnlyList<IndividualConnectionCountsDto>> GetAllConnectionCountsAsync(CancellationToken ct = default)
+    {
+        var rows = await individuals.GetConnectionCountsAsync(ct);
+
+        return rows
+            .GroupBy(r => new { r.IndividualId, r.FirstName, r.LastName })
+            .Select(g => new IndividualConnectionCountsDto(
+                g.Key.IndividualId,
+                g.Key.FirstName,
+                g.Key.LastName,
+                g.Select(r => new ConnectionTypeCount(r.ConnectionType, r.Count)).ToList()))
+            .OrderBy(x => x.IndividualId)
+            .ToList();
+    }
+
+    private async Task EnsureCityExistsAsync(int cityId, CancellationToken ct)
+    {
+        if (!await cities.ExistsAsync(cityId, ct))
+        {
+            throw new DomainValidationException("Validation_City_NotFound", cityId);
+        }
+    }
+
+    private async Task EnsurePersonalNumberAvailableAsync(string personalNumber, int? excludeId, CancellationToken ct)
+    {
+        if (await individuals.PersonalNumberExistsAsync(personalNumber, excludeId, ct))
+        {
+            throw new DomainValidationException("Validation_PersonalNumber_Duplicate", personalNumber);
+        }
+    }
+
+    private async Task EnsureConnectionsValidAsync(int? ownerId, IEnumerable<int> connectedIds, CancellationToken ct)
+    {
+        var ids = connectedIds.Distinct().ToList();
+        if (ids.Count == 0) return;
+
+        if (ownerId.HasValue && ids.Contains(ownerId.Value))
+        {
+            throw new DomainValidationException("Validation_SelfConnection");
+        }
+
+        var existing = await individuals.GetExistingIdsAsync(ids, ct);
+        var missing = ids.Except(existing).ToList();
+        if (missing.Count > 0)
+        {
+            throw new DomainValidationException("Validation_ConnectedIndividual_NotFound", string.Join(", ", missing));
+        }
     }
 
     private static IndividualListItemDto MapToListItem(Individual e) =>
