@@ -19,7 +19,7 @@
     <value>უნდა იყოს 2-დან 50 სიმბოლომდე.</value>
   </data>
   <data name="Validation_Name_AlphabetMix" xml:space="preserve">
-    <value>უნდა შეიცავდეს მხოლოდ ქართული ან ლათინური ანბანის ასოებს, არ უნდა იყოს შერეული.</value>
+    <value>უნდა შეიცავდეს მხოლოდ ქართული ან ლათინური ანბანის ასოებს.</value>
   </data>
   <data name="Validation_PersonalNumber_Format" xml:space="preserve">
     <value>პირადი ნომერი უნდა შეიცავდეს ზუსტად 11 ციფრს.</value>
@@ -37,6 +37,9 @@
     <value>ნომერი უნდა იყოს 4-დან 50 სიმბოლომდე.</value>
   </data>
   <data name="Validation_Update_AtLeastOneField" xml:space="preserve">
-    <value>მინიმუმ ერთი ველი უნდა იყოს მოწოდებული.</value>
+    <value>მინიმუმ ერთი ველი უნდა იყოს შევსებული.</value>
+  </data>
+  <data name="Error_Unhandled" xml:space="preserve">
+    <value>მოხდა მოულოდნელი შეცდომა.</value>
   </data>
 </root>

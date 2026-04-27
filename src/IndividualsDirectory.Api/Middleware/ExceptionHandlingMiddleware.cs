@@ -1,8 +1,13 @@
+using IndividualsDirectory.Api.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace IndividualsDirectory.Api.Middleware;
 
-public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+public class ExceptionHandlingMiddleware(
+    RequestDelegate next,
+    ILogger<ExceptionHandlingMiddleware> logger,
+    IStringLocalizer<Messages> localizer)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -30,7 +35,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             var problem = new ProblemDetails
             {
                 Status = StatusCodes.Status500InternalServerError,
-                Title = "An unexpected error occurred.",
+                Title = localizer["Error_Unhandled"].Value,
                 Instance = context.Request.Path,
             };
 
