@@ -25,7 +25,6 @@ public class IndividualService(
             PersonalNumber = request.PersonalNumber,
             DateOfBirth = request.DateOfBirth,
             CityId = request.CityId,
-            ImageId = request.ImageId,
             Contacts = request.Contacts
                 .Select(c => new ContactEntity { Type = c.Type, Number = c.Number })
                 .ToList(),

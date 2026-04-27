@@ -12,7 +12,6 @@ public record CreateIndividualRequest(
     string PersonalNumber,
     DateOnly DateOfBirth,
     int CityId,
-    [property: JsonIgnore] Guid? ImageId,
     List<Contact> Contacts,
     List<ConnectedIndividual>? ConnectedIndividuals);
 
