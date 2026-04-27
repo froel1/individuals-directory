@@ -50,6 +50,19 @@ public class IndividualsController(IIndividualService service) : ControllerBase
         return deleted ? NoContent() : NotFound();
     }
 
+    [HttpPost("{id:int}/image")]
+    public async Task<IActionResult> UploadImage(int id, IFormFile file, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest("No file provided.");
+        }
+
+        await using var stream = file.OpenReadStream();
+        var imageId = await service.UploadImageAsync(id, stream, file.FileName, ct);
+        return imageId is null ? NotFound() : Ok(new { imageId });
+    }
+
     [HttpPut("{id:int}/connections")]
     public async Task<IActionResult> UpdateConnections(int id, List<ConnectedIndividual> connections, CancellationToken ct)
     {
