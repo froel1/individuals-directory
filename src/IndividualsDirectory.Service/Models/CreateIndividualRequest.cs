@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using IndividualsDirectory.Data.Entities;
 using IndividualsDirectory.Service.Models.Shared;
 using Contact = IndividualsDirectory.Service.Models.Shared.Contact;
@@ -14,4 +13,3 @@ public record CreateIndividualRequest(
     int CityId,
     List<Contact> Contacts,
     List<ConnectedIndividual>? ConnectedIndividuals);
-

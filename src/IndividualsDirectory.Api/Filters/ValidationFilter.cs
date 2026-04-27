@@ -15,12 +15,9 @@ public class ValidationFilter(IStringLocalizer<Messages> localizer) : IAsyncActi
             if (argument is null) continue;
 
             var validatorType = typeof(IValidator<>).MakeGenericType(argument.GetType());
-            if (context.HttpContext.RequestServices.GetService(validatorType) is not IValidator validator)
-            {
-                continue;
-            }
+            if (context.HttpContext.RequestServices.GetService(validatorType) is not IValidator validator) continue;
 
-            var validationContext = (IValidationContext)Activator.CreateInstance(
+            var validationContext = (IValidationContext) Activator.CreateInstance(
                 typeof(ValidationContext<>).MakeGenericType(argument.GetType()),
                 argument)!;
 
@@ -36,7 +33,7 @@ public class ValidationFilter(IStringLocalizer<Messages> localizer) : IAsyncActi
                 {
                     Status = StatusCodes.Status400BadRequest,
                     Title = localizer["Validation_Failed"].Value,
-                    Instance = context.HttpContext.Request.Path,
+                    Instance = context.HttpContext.Request.Path
                 });
                 return;
             }

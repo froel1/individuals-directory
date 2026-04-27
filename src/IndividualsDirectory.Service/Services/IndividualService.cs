@@ -20,12 +20,9 @@ public class IndividualService(
     public async Task<int> CreateAsync(CreateIndividualRequest request, CancellationToken ct = default)
     {
         await EnsureCityExistsAsync(request.CityId, ct);
-        await EnsurePersonalNumberAvailableAsync(request.PersonalNumber, excludeId: null, ct);
+        await EnsurePersonalNumberAvailableAsync(request.PersonalNumber, null, ct);
 
-        if (request.ConnectedIndividuals is { Count: > 0 } incoming)
-        {
-            await EnsureConnectionsValidAsync(ownerId: null, incoming.Select(c => c.IndividualId), ct);
-        }
+        if (request.ConnectedIndividuals is {Count: > 0} incoming) await EnsureConnectionsValidAsync(null, incoming.Select(c => c.IndividualId), ct);
 
         var individual = new Individual
         {
@@ -36,20 +33,18 @@ public class IndividualService(
             DateOfBirth = request.DateOfBirth,
             CityId = request.CityId,
             Contacts = request.Contacts
-                .Select(c => new ContactEntity { Type = c.Type, Number = c.Number })
-                .ToList(),
+                .Select(c => new ContactEntity {Type = c.Type, Number = c.Number})
+                .ToList()
         };
 
-        if (request.ConnectedIndividuals is { Count: > 0 } cs)
-        {
+        if (request.ConnectedIndividuals is {Count: > 0} cs)
             individual.Connections = cs
                 .Select(c => new IndividualConnection
                 {
                     ConnectedIndividualId = c.IndividualId,
-                    ConnectionType = c.ConnectionType,
+                    ConnectionType = c.ConnectionType
                 })
                 .ToList();
-        }
 
         individuals.Add(individual);
         await uow.SaveChangesAsync(ct);
@@ -62,7 +57,7 @@ public class IndividualService(
         if (individual is null) return false;
 
         if (request.CityId.HasValue) await EnsureCityExistsAsync(request.CityId.Value, ct);
-        if (request.PersonalNumber != null) await EnsurePersonalNumberAvailableAsync(request.PersonalNumber, excludeId: id, ct);
+        if (request.PersonalNumber != null) await EnsurePersonalNumberAvailableAsync(request.PersonalNumber, id, ct);
 
         if (request.FirstName != null) individual.FirstName = request.FirstName;
         if (request.LastName != null) individual.LastName = request.LastName;
@@ -75,10 +70,7 @@ public class IndividualService(
         if (request.Contacts != null)
         {
             individual.Contacts.Clear();
-            foreach (var c in request.Contacts)
-            {
-                individual.Contacts.Add(new ContactEntity { Type = c.Type, Number = c.Number });
-            }
+            foreach (var c in request.Contacts) individual.Contacts.Add(new ContactEntity {Type = c.Type, Number = c.Number});
         }
 
         await uow.SaveChangesAsync(ct);
@@ -91,18 +83,12 @@ public class IndividualService(
         if (individual is null) return false;
 
         var inboundReferences = await connections.GetReferencesToAsync(id, ct);
-        if (inboundReferences.Count > 0)
-        {
-            connections.RemoveRange(inboundReferences);
-        }
+        if (inboundReferences.Count > 0) connections.RemoveRange(inboundReferences);
 
         individuals.Remove(individual);
         await uow.SaveChangesAsync(ct);
 
-        if (individual.ImageId.HasValue)
-        {
-            await imageStorage.DeleteAsync(individual.ImageId.Value, ct);
-        }
+        if (individual.ImageId.HasValue) await imageStorage.DeleteAsync(individual.ImageId.Value, ct);
 
         return true;
     }
@@ -116,7 +102,7 @@ public class IndividualService(
             entity.Id,
             entity.FirstName,
             entity.LastName,
-            ImageUrl: null,
+            null,
             entity.Gender,
             entity.PersonalNumber,
             entity.DateOfBirth,
@@ -169,10 +155,7 @@ public class IndividualService(
 
     public async Task<bool> UpdateConnectionsAsync(int ownerId, IReadOnlyList<ConnectedIndividual> desired, CancellationToken ct = default)
     {
-        if (!await individuals.ExistsAsync(ownerId, ct))
-        {
-            return false;
-        }
+        if (!await individuals.ExistsAsync(ownerId, ct)) return false;
 
         await EnsureConnectionsValidAsync(ownerId, desired.Select(d => d.IndividualId), ct);
 
@@ -188,41 +171,30 @@ public class IndividualService(
             .Where(kvp => !desiredByOtherId.ContainsKey(kvp.Key))
             .SelectMany(kvp => kvp.Value)
             .ToList();
-        if (toRemove.Count > 0)
-        {
-            connections.RemoveRange(toRemove);
-        }
+        if (toRemove.Count > 0) connections.RemoveRange(toRemove);
 
         foreach (var d in desired)
-        {
             if (existingPairs.TryGetValue(d.IndividualId, out var existingRows))
             {
-                foreach (var row in existingRows)
-                {
-                    row.ConnectionType = d.ConnectionType;
-                }
+                foreach (var row in existingRows) row.ConnectionType = d.ConnectionType;
 
                 var hasForward = existingRows.Any(r => r.IndividualId == ownerId);
                 var hasReverse = existingRows.Any(r => r.ConnectedIndividualId == ownerId);
 
                 if (!hasForward)
-                {
                     connections.Add(new IndividualConnection
                     {
                         IndividualId = ownerId,
                         ConnectedIndividualId = d.IndividualId,
-                        ConnectionType = d.ConnectionType,
+                        ConnectionType = d.ConnectionType
                     });
-                }
                 if (!hasReverse)
-                {
                     connections.Add(new IndividualConnection
                     {
                         IndividualId = d.IndividualId,
                         ConnectedIndividualId = ownerId,
-                        ConnectionType = d.ConnectionType,
+                        ConnectionType = d.ConnectionType
                     });
-                }
             }
             else
             {
@@ -230,16 +202,15 @@ public class IndividualService(
                 {
                     IndividualId = ownerId,
                     ConnectedIndividualId = d.IndividualId,
-                    ConnectionType = d.ConnectionType,
+                    ConnectionType = d.ConnectionType
                 });
                 connections.Add(new IndividualConnection
                 {
                     IndividualId = d.IndividualId,
                     ConnectedIndividualId = ownerId,
-                    ConnectionType = d.ConnectionType,
+                    ConnectionType = d.ConnectionType
                 });
             }
-        }
 
         await uow.SaveChangesAsync(ct);
         return true;
@@ -247,10 +218,7 @@ public class IndividualService(
 
     public async Task<IReadOnlyList<ConnectionGroupDto>?> GetConnectionsGroupedAsync(int ownerId, CancellationToken ct = default)
     {
-        if (!await individuals.ExistsAsync(ownerId, ct))
-        {
-            return null;
-        }
+        if (!await individuals.ExistsAsync(ownerId, ct)) return null;
 
         var conns = await connections.GetByOwnerAsync(ownerId, ct);
 
@@ -277,10 +245,7 @@ public class IndividualService(
         individual.ImageId = newImageId;
         await uow.SaveChangesAsync(ct);
 
-        if (oldImageId.HasValue)
-        {
-            await imageStorage.DeleteAsync(oldImageId.Value, ct);
-        }
+        if (oldImageId.HasValue) await imageStorage.DeleteAsync(oldImageId.Value, ct);
 
         return newImageId;
     }
@@ -290,7 +255,7 @@ public class IndividualService(
         var rows = await individuals.GetConnectionCountsAsync(ct);
 
         return rows
-            .GroupBy(r => new { r.IndividualId, r.FirstName, r.LastName })
+            .GroupBy(r => new {r.IndividualId, r.FirstName, r.LastName})
             .Select(g => new IndividualConnectionCountsDto(
                 g.Key.IndividualId,
                 g.Key.FirstName,
@@ -302,18 +267,12 @@ public class IndividualService(
 
     private async Task EnsureCityExistsAsync(int cityId, CancellationToken ct)
     {
-        if (!await cities.ExistsAsync(cityId, ct))
-        {
-            throw new DomainValidationException("Validation_City_NotFound", cityId);
-        }
+        if (!await cities.ExistsAsync(cityId, ct)) throw new DomainValidationException("Validation_City_NotFound", cityId);
     }
 
     private async Task EnsurePersonalNumberAvailableAsync(string personalNumber, int? excludeId, CancellationToken ct)
     {
-        if (await individuals.PersonalNumberExistsAsync(personalNumber, excludeId, ct))
-        {
-            throw new DomainValidationException("Validation_PersonalNumber_Duplicate", personalNumber);
-        }
+        if (await individuals.PersonalNumberExistsAsync(personalNumber, excludeId, ct)) throw new DomainValidationException("Validation_PersonalNumber_Duplicate", personalNumber);
     }
 
     private async Task EnsureConnectionsValidAsync(int? ownerId, IEnumerable<int> connectedIds, CancellationToken ct)
@@ -321,17 +280,11 @@ public class IndividualService(
         var ids = connectedIds.Distinct().ToList();
         if (ids.Count == 0) return;
 
-        if (ownerId.HasValue && ids.Contains(ownerId.Value))
-        {
-            throw new DomainValidationException("Validation_SelfConnection");
-        }
+        if (ownerId.HasValue && ids.Contains(ownerId.Value)) throw new DomainValidationException("Validation_SelfConnection");
 
         var existing = await individuals.GetExistingIdsAsync(ids, ct);
         var missing = ids.Except(existing).ToList();
-        if (missing.Count > 0)
-        {
-            throw new DomainValidationException("Validation_ConnectedIndividual_NotFound", string.Join(", ", missing));
-        }
+        if (missing.Count > 0) throw new DomainValidationException("Validation_ConnectedIndividual_NotFound", string.Join(", ", missing));
     }
 
     private static IndividualListItemDto MapToListItem(Individual e) =>

@@ -1,6 +1,5 @@
 using FluentValidation;
 using IndividualsDirectory.Api.Localization;
-using IndividualsDirectory.Service.Models;
 using IndividualsDirectory.Service.Models.Shared;
 using Microsoft.Extensions.Localization;
 

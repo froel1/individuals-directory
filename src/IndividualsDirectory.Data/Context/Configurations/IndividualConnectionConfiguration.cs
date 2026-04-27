@@ -16,7 +16,7 @@ public class IndividualConnectionConfiguration : IEntityTypeConfiguration<Indivi
             .HasForeignKey(x => x.ConnectedIndividualId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(x => new { x.IndividualId, x.ConnectedIndividualId })
+        builder.HasIndex(x => new {x.IndividualId, x.ConnectedIndividualId})
             .IsUnique();
     }
 }

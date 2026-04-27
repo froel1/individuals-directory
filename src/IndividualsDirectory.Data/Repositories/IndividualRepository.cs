@@ -36,7 +36,7 @@ public class IndividualRepository(AppDbContext context) : IIndividualRepository
 
     public async Task<IReadOnlyList<ConnectionCountRow>> GetConnectionCountsAsync(CancellationToken ct = default) =>
         await context.IndividualConnections
-            .GroupBy(c => new { c.IndividualId, c.Individual.FirstName, c.Individual.LastName, c.ConnectionType })
+            .GroupBy(c => new {c.IndividualId, c.Individual.FirstName, c.Individual.LastName, c.ConnectionType})
             .Select(g => new ConnectionCountRow(
                 g.Key.IndividualId,
                 g.Key.FirstName,

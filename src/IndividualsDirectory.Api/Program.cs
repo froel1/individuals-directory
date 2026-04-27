@@ -6,10 +6,7 @@ using IndividualsDirectory.Service.Images;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add<IndividualsDirectory.Api.Filters.ValidationFilter>();
-});
+builder.Services.AddControllers(options => { options.Filters.Add<IndividualsDirectory.Api.Filters.ValidationFilter>(); });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddLocalization();
@@ -19,7 +16,7 @@ builder.Services.Configure<ImageStorageOptions>(builder.Configuration.GetSection
 
 builder.Services
     .AddDataLayer(builder.Configuration.GetConnectionString("Default")
-        ?? throw new InvalidOperationException("Connection string 'Default' not configured."))
+                  ?? throw new InvalidOperationException("Connection string 'Default' not configured."))
     .AddServiceLayer();
 
 var app = builder.Build();

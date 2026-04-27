@@ -10,9 +10,7 @@ public class FileSystemImageStorageService : IImageStorageService
     private readonly string _basePath;
 
     public FileSystemImageStorageService(IOptions<ImageStorageOptions> options)
-    {
-        _basePath = Path.GetFullPath(options.Value.BasePath);
-    }
+        => _basePath = Path.GetFullPath(options.Value.BasePath);
 
     public async Task<Guid> SaveAsync(Stream content, string fileName, CancellationToken ct = default)
     {
@@ -30,21 +28,12 @@ public class FileSystemImageStorageService : IImageStorageService
 
     public Task<ImageFile?> GetAsync(Guid imageId, CancellationToken ct = default)
     {
-        if (!Directory.Exists(_basePath))
-        {
-            return Task.FromResult<ImageFile?>(null);
-        }
+        if (!Directory.Exists(_basePath)) return Task.FromResult<ImageFile?>(null);
 
         var match = Directory.EnumerateFiles(_basePath, $"{imageId}.*").FirstOrDefault();
-        if (match is null)
-        {
-            return Task.FromResult<ImageFile?>(null);
-        }
+        if (match is null) return Task.FromResult<ImageFile?>(null);
 
-        if (!ContentTypeProvider.TryGetContentType(match, out var contentType))
-        {
-            contentType = "application/octet-stream";
-        }
+        if (!ContentTypeProvider.TryGetContentType(match, out var contentType)) contentType = "application/octet-stream";
 
         Stream stream = File.OpenRead(match);
         return Task.FromResult<ImageFile?>(new ImageFile(stream, contentType));
@@ -52,15 +41,9 @@ public class FileSystemImageStorageService : IImageStorageService
 
     public Task DeleteAsync(Guid imageId, CancellationToken ct = default)
     {
-        if (!Directory.Exists(_basePath))
-        {
-            return Task.CompletedTask;
-        }
+        if (!Directory.Exists(_basePath)) return Task.CompletedTask;
 
-        foreach (var file in Directory.EnumerateFiles(_basePath, $"{imageId}.*"))
-        {
-            File.Delete(file);
-        }
+        foreach (var file in Directory.EnumerateFiles(_basePath, $"{imageId}.*")) File.Delete(file);
 
         return Task.CompletedTask;
     }

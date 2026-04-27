@@ -25,8 +25,8 @@ public class IndividualsController(
         var withUrl = result with
         {
             ImageUrl = result.ImageId.HasValue
-                ? Url.Action(nameof(GetImage), "Individuals", new { id }, Request.Scheme)
-                : null,
+                ? Url.Action(nameof(GetImage), "Individuals", new {id}, Request.Scheme)
+                : null
         };
         return Ok(withUrl);
     }
@@ -58,7 +58,7 @@ public class IndividualsController(
     public async Task<IActionResult> Create(CreateIndividualRequest request, CancellationToken ct)
     {
         var newId = await service.CreateAsync(request, ct);
-        return CreatedAtAction(nameof(GetById), new { id = newId }, new { id = newId });
+        return CreatedAtAction(nameof(GetById), new {id = newId}, new {id = newId});
     }
 
     /// <summary>
@@ -89,7 +89,7 @@ public class IndividualsController(
     {
         await using var stream = request.File.OpenReadStream();
         var imageId = await service.UploadImageAsync(id, stream, request.File.FileName, ct);
-        return imageId is null ? NotFound() : Ok(new { imageId });
+        return imageId is null ? NotFound() : Ok(new {imageId});
     }
 
     /// <summary>
@@ -99,16 +99,10 @@ public class IndividualsController(
     public async Task<IActionResult> GetImage(int id, CancellationToken ct)
     {
         var details = await service.GetByIdAsync(id, ct);
-        if (details is null || !details.ImageId.HasValue)
-        {
-            return NotFound();
-        }
+        if (details is null || !details.ImageId.HasValue) return NotFound();
 
         var image = await imageStorage.GetAsync(details.ImageId.Value, ct);
-        if (image is null)
-        {
-            return NotFound();
-        }
+        if (image is null) return NotFound();
 
         return File(image.Content, image.ContentType);
     }
@@ -122,7 +116,7 @@ public class IndividualsController(
         var updated = await service.UpdateConnectionsAsync(id, connections, ct);
         return updated ? NoContent() : NotFound();
     }
-    
+
     /// <summary>
     /// Returns a report of the individual's connected persons grouped by connection type (with per-group counts).
     /// </summary>

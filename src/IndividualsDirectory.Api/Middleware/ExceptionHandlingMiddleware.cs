@@ -28,7 +28,7 @@ public class ExceptionHandlingMiddleware(
             {
                 Status = StatusCodes.Status400BadRequest,
                 Title = localizer[ex.MessageKey, ex.Args].Value,
-                Instance = context.Request.Path,
+                Instance = context.Request.Path
             });
         }
         catch (Exception ex)
@@ -49,7 +49,7 @@ public class ExceptionHandlingMiddleware(
             {
                 Status = StatusCodes.Status500InternalServerError,
                 Title = localizer["Error_Unhandled"].Value,
-                Instance = context.Request.Path,
+                Instance = context.Request.Path
             });
         }
     }

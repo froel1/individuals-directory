@@ -25,9 +25,6 @@ public class CreateIndividualRequestValidator : AbstractValidator<CreateIndividu
 
         RuleForEach(x => x.Contacts).SetValidator(new ContactValidator(localizer));
 
-        When(x => x.ConnectedIndividuals != null, () =>
-        {
-            RuleForEach(x => x.ConnectedIndividuals!).SetValidator(new ConnectedIndividualValidator(localizer));
-        });
+        When(x => x.ConnectedIndividuals != null, () => { RuleForEach(x => x.ConnectedIndividuals!).SetValidator(new ConnectedIndividualValidator(localizer)); });
     }
 }

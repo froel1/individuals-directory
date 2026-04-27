@@ -1,7 +1,7 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/IndividualsDirectory.Api/IndividualsDirectory.Api.csproj" />
-    <Project Path="src/IndividualsDirectory.Data/IndividualsDirectory.Data.csproj" />
-    <Project Path="src/IndividualsDirectory.Service/IndividualsDirectory.Service.csproj" />
-  </Folder>
+    <Folder Name="/src/">
+        <Project Path="src/IndividualsDirectory.Api/IndividualsDirectory.Api.csproj"/>
+        <Project Path="src/IndividualsDirectory.Data/IndividualsDirectory.Data.csproj"/>
+        <Project Path="src/IndividualsDirectory.Service/IndividualsDirectory.Service.csproj"/>
+    </Folder>
 </Solution>
