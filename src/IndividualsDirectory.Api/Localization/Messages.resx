@@ -42,4 +42,7 @@
   <data name="Error_Unhandled" xml:space="preserve">
     <value>An unexpected error occurred.</value>
   </data>
+  <data name="Validation_Failed" xml:space="preserve">
+    <value>One or more validation errors occurred.</value>
+  </data>
 </root>

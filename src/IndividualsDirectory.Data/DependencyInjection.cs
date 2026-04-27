@@ -1,4 +1,5 @@
 using IndividualsDirectory.Data.Context;
+using IndividualsDirectory.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,6 +11,12 @@ public static class DependencyInjection
     {
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(connectionString));
+
+        services.AddScoped<IIndividualRepository, IndividualRepository>();
+        services.AddScoped<ICityRepository, CityRepository>();
+        services.AddScoped<IIndividualConnectionRepository, IndividualConnectionRepository>();
+        services.AddScoped<UnitOfWork.IUnitOfWork, UnitOfWork.UnitOfWork>();
+
         return services;
     }
 }

@@ -6,8 +6,12 @@ using IndividualsDirectory.Service.Images;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<IndividualsDirectory.Api.Filters.ValidationFilter>();
+});
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddLocalization();
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
@@ -25,7 +29,8 @@ app.UseMiddleware<LocalizationMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
