@@ -93,7 +93,7 @@ public class IndividualsController(
     }
 
     /// <summary>
-    /// Streams the individual's profile image with the appropriate content type.
+    /// Gets individual image, by individual id. as we have single image per individual, image id isn't required.
     /// </summary>
     [HttpGet("{id:int}/image", Name = nameof(GetImage))]
     public async Task<IActionResult> GetImage(int id, CancellationToken ct)
@@ -113,6 +113,9 @@ public class IndividualsController(
         return File(image.Content, image.ContentType);
     }
 
+    /// <summary>
+    /// Sets the individual's list of connected persons. The service diffs against existing connections, adds new ones, removes missing ones, and updates connection types. Connections are bidirectional — both sides see the relationship.
+    /// </summary>
     [HttpPut("{id:int}/connections")]
     public async Task<IActionResult> UpdateConnections(int id, List<ConnectedIndividual> connections, CancellationToken ct)
     {
@@ -120,6 +123,9 @@ public class IndividualsController(
         return updated ? NoContent() : NotFound();
     }
     
+    /// <summary>
+    /// Returns a report of the individual's connected persons grouped by connection type (with per-group counts).
+    /// </summary>
     [HttpGet("{id:int}/connections/grouped")]
     public async Task<IActionResult> GetConnectionsGrouped(int id, CancellationToken ct)
     {
