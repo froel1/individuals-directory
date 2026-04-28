@@ -1,5 +1,4 @@
 using IndividualsDirectory.Data.Entities;
-using IndividualsDirectory.Data.Repositories;
 using IndividualsDirectory.Data.UnitOfWork;
 using IndividualsDirectory.Service.Exceptions;
 using IndividualsDirectory.Service.Images;
@@ -11,9 +10,6 @@ using ContactEntity = IndividualsDirectory.Data.Entities.Contact;
 namespace IndividualsDirectory.Service.Services;
 
 public class IndividualService(
-    IIndividualRepository individuals,
-    ICityRepository cities,
-    IIndividualConnectionRepository connections,
     IImageStorageService imageStorage,
     IUnitOfWork uow) : IIndividualService
 {
@@ -46,14 +42,14 @@ public class IndividualService(
                 })
                 .ToList();
 
-        individuals.Add(individual);
+        uow.Individuals.Add(individual);
         await uow.SaveChangesAsync(ct);
         return individual.Id;
     }
 
     public async Task<bool> UpdateAsync(int id, UpdateIndividualRequest request, CancellationToken ct = default)
     {
-        var individual = await individuals.GetByIdWithDetailsAsync(id, ct);
+        var individual = await uow.Individuals.GetByIdWithDetailsAsync(id, ct);
         if (individual is null) return false;
 
         if (request.CityId.HasValue) await EnsureCityExistsAsync(request.CityId.Value, ct);
@@ -79,13 +75,13 @@ public class IndividualService(
 
     public async Task<bool> DeleteAsync(int id, CancellationToken ct = default)
     {
-        var individual = await individuals.GetByIdAsync(id, ct);
+        var individual = await uow.Individuals.GetByIdAsync(id, ct);
         if (individual is null) return false;
+        
+        var inboundReferences = await uow.IndividualConnections.GetReferencesToAsync(id, ct);
+        if (inboundReferences.Count > 0) uow.IndividualConnections.RemoveRange(inboundReferences);
 
-        var inboundReferences = await connections.GetReferencesToAsync(id, ct);
-        if (inboundReferences.Count > 0) connections.RemoveRange(inboundReferences);
-
-        individuals.Remove(individual);
+        uow.Individuals.Remove(individual);
         await uow.SaveChangesAsync(ct);
 
         if (individual.ImageId.HasValue) await imageStorage.DeleteAsync(individual.ImageId.Value, ct);
@@ -95,7 +91,7 @@ public class IndividualService(
 
     public async Task<IndividualDetailsDto?> GetByIdAsync(int id, CancellationToken ct = default)
     {
-        var entity = await individuals.GetByIdWithDetailsAsync(id, ct);
+        var entity = await uow.Individuals.GetByIdWithDetailsAsync(id, ct);
         if (entity is null) return null;
 
         return new IndividualDetailsDto(
@@ -118,7 +114,7 @@ public class IndividualService(
 
     public async Task<PagedResult<IndividualListItemDto>> QuickSearchAsync(QuickSearchRequest request, CancellationToken ct = default)
     {
-        var (items, total) = await individuals.QuickSearchAsync(
+        var (items, total) = await uow.Individuals.QuickSearchAsync(
             request.FirstName,
             request.LastName,
             request.PersonalNumber,
@@ -135,7 +131,7 @@ public class IndividualService(
 
     public async Task<PagedResult<IndividualListItemDto>> DetailedSearchAsync(DetailedSearchRequest request, CancellationToken ct = default)
     {
-        var (items, total) = await individuals.DetailedSearchAsync(
+        var (items, total) = await uow.Individuals.DetailedSearchAsync(
             request.FirstName,
             request.LastName,
             request.Gender,
@@ -155,11 +151,11 @@ public class IndividualService(
 
     public async Task<bool> UpdateConnectionsAsync(int ownerId, IReadOnlyList<ConnectedIndividual> desired, CancellationToken ct = default)
     {
-        if (!await individuals.ExistsAsync(ownerId, ct)) return false;
+        if (!await uow.Individuals.ExistsAsync(ownerId, ct)) return false;
 
         await EnsureConnectionsValidAsync(ownerId, desired.Select(d => d.IndividualId), ct);
 
-        var allInvolving = await connections.GetAllInvolvingAsync(ownerId, ct);
+        var allInvolving = await uow.IndividualConnections.GetAllInvolvingAsync(ownerId, ct);
 
         var existingPairs = allInvolving
             .GroupBy(c => c.IndividualId == ownerId ? c.ConnectedIndividualId : c.IndividualId)
@@ -171,7 +167,7 @@ public class IndividualService(
             .Where(kvp => !desiredByOtherId.ContainsKey(kvp.Key))
             .SelectMany(kvp => kvp.Value)
             .ToList();
-        if (toRemove.Count > 0) connections.RemoveRange(toRemove);
+        if (toRemove.Count > 0) uow.IndividualConnections.RemoveRange(toRemove);
 
         foreach (var d in desired)
             if (existingPairs.TryGetValue(d.IndividualId, out var existingRows))
@@ -182,14 +178,14 @@ public class IndividualService(
                 var hasReverse = existingRows.Any(r => r.ConnectedIndividualId == ownerId);
 
                 if (!hasForward)
-                    connections.Add(new IndividualConnection
+                    uow.IndividualConnections.Add(new IndividualConnection
                     {
                         IndividualId = ownerId,
                         ConnectedIndividualId = d.IndividualId,
                         ConnectionType = d.ConnectionType
                     });
                 if (!hasReverse)
-                    connections.Add(new IndividualConnection
+                    uow.IndividualConnections.Add(new IndividualConnection
                     {
                         IndividualId = d.IndividualId,
                         ConnectedIndividualId = ownerId,
@@ -198,13 +194,13 @@ public class IndividualService(
             }
             else
             {
-                connections.Add(new IndividualConnection
+                uow.IndividualConnections.Add(new IndividualConnection
                 {
                     IndividualId = ownerId,
                     ConnectedIndividualId = d.IndividualId,
                     ConnectionType = d.ConnectionType
                 });
-                connections.Add(new IndividualConnection
+                uow.IndividualConnections.Add(new IndividualConnection
                 {
                     IndividualId = d.IndividualId,
                     ConnectedIndividualId = ownerId,
@@ -218,9 +214,9 @@ public class IndividualService(
 
     public async Task<IReadOnlyList<ConnectionGroupDto>?> GetConnectionsGroupedAsync(int ownerId, CancellationToken ct = default)
     {
-        if (!await individuals.ExistsAsync(ownerId, ct)) return null;
+        if (!await uow.Individuals.ExistsAsync(ownerId, ct)) return null;
 
-        var conns = await connections.GetByOwnerAsync(ownerId, ct);
+        var conns = await uow.IndividualConnections.GetByOwnerAsync(ownerId, ct);
 
         return conns
             .GroupBy(c => c.ConnectionType)
@@ -236,7 +232,7 @@ public class IndividualService(
 
     public async Task<Guid?> UploadImageAsync(int individualId, Stream content, string fileName, CancellationToken ct = default)
     {
-        var individual = await individuals.GetByIdAsync(individualId, ct);
+        var individual = await uow.Individuals.GetByIdAsync(individualId, ct);
         if (individual is null) return null;
 
         var newImageId = await imageStorage.SaveAsync(content, fileName, ct);
@@ -252,7 +248,7 @@ public class IndividualService(
 
     public async Task<IReadOnlyList<IndividualConnectionCountsDto>> GetAllConnectionCountsAsync(CancellationToken ct = default)
     {
-        var rows = await individuals.GetConnectionCountsAsync(ct);
+        var rows = await uow.Individuals.GetConnectionCountsAsync(ct);
 
         return rows
             .GroupBy(r => new {r.IndividualId, r.FirstName, r.LastName})
@@ -267,12 +263,12 @@ public class IndividualService(
 
     private async Task EnsureCityExistsAsync(int cityId, CancellationToken ct)
     {
-        if (!await cities.ExistsAsync(cityId, ct)) throw new DomainValidationException("Validation_City_NotFound", cityId);
+        if (!await uow.Cities.ExistsAsync(cityId, ct)) throw new DomainValidationException("Validation_City_NotFound", cityId);
     }
 
     private async Task EnsurePersonalNumberAvailableAsync(string personalNumber, int? excludeId, CancellationToken ct)
     {
-        if (await individuals.PersonalNumberExistsAsync(personalNumber, excludeId, ct)) throw new DomainValidationException("Validation_PersonalNumber_Duplicate", personalNumber);
+        if (await uow.Individuals.PersonalNumberExistsAsync(personalNumber, excludeId, ct)) throw new DomainValidationException("Validation_PersonalNumber_Duplicate", personalNumber);
     }
 
     private async Task EnsureConnectionsValidAsync(int? ownerId, IEnumerable<int> connectedIds, CancellationToken ct)
@@ -282,7 +278,7 @@ public class IndividualService(
 
         if (ownerId.HasValue && ids.Contains(ownerId.Value)) throw new DomainValidationException("Validation_SelfConnection");
 
-        var existing = await individuals.GetExistingIdsAsync(ids, ct);
+        var existing = await uow.Individuals.GetExistingIdsAsync(ids, ct);
         var missing = ids.Except(existing).ToList();
         if (missing.Count > 0) throw new DomainValidationException("Validation_ConnectedIndividual_NotFound", string.Join(", ", missing));
     }
