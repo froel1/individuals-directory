@@ -1,7 +1,4 @@
 -- Demo data for IndividualsDirectory.
--- Optional: run after CreateDatabase.sql to populate sample individuals,
--- their contacts, and bidirectional connections.
--- Cities are NOT seeded here -- they ship as reference data in CreateDatabase.sql.
 
 USE IndividualsDirectory;
 GO
