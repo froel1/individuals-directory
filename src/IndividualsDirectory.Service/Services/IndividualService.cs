@@ -34,6 +34,8 @@ public class IndividualService(
         };
 
         if (request.ConnectedIndividuals is {Count: > 0} cs)
+        {
+            // Forward rows (owner -> other).
             individual.Connections = cs
                 .Select(c => new IndividualConnection
                 {
@@ -41,6 +43,17 @@ public class IndividualService(
                     ConnectionType = c.ConnectionType
                 })
                 .ToList();
+
+            // Reverse rows (other -> owner). FK back to the new individual is resolved
+            // by EF via the navigation property once the parent insert runs.
+            foreach (var c in cs)
+                uow.IndividualConnections.Add(new IndividualConnection
+                {
+                    IndividualId = c.IndividualId,
+                    ConnectedIndividual = individual,
+                    ConnectionType = c.ConnectionType
+                });
+        }
 
         uow.Individuals.Add(individual);
         await uow.SaveChangesAsync(ct);
